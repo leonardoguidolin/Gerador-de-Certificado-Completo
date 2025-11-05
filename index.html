@@ -59,7 +59,7 @@
     .brand .evt{font-weight:800; letter-spacing:.6px; font-size:18px; color:#0e2c62}
     .cert h1{margin:18mm 0 4mm; text-align:center; font-size:30px; letter-spacing:.8px; color:#0a1e4a}
     .cert p{margin:8px 0; font-size:15.5px; color:#0f2559}
-    .cert .bigname{font-size:26px; font-weight:800; text-align:center; margin:10px 0 2px; color:#0a1e4a}
+    .cert .bigname{font-size:26px; font-weight:800; text-align:center; margin:10px 0 2px; color:#0a1e4a; text-transform:uppercase;}
     .cert .center{text-align:center}
     .muted{color:#415a98}
     .meta{display:flex; gap:24px; justify-content:center; margin-top:20px; font-size:14px; color:#16306b}
@@ -175,9 +175,8 @@
       for(const ln of linhas){
         const clean = ln.trim();
         if(!clean) continue;
-        // separadores aceitos: ; | , \t
         const parts = clean.split(/\s*[;|,\t]\s*/);
-        const nome = parts[0]?.trim();
+        const nome = parts[0]?.trim().toUpperCase(); // agora nome em maiúsculas
         const horas = parseHoras(parts[1]);
         if(!nome){ continue; }
         if(horas==null){
@@ -270,51 +269,9 @@
       const cargo = $('#cargo').value.trim();
       const participantes = parseParticipantes($('#participantes').value);
 
-      // validações básicas
       const errors = [];
       if(!evt) errors.push('Informe o nome do evento.');
       if(!dataExt) errors.push('Selecione a data do evento.');
       if(!local) errors.push('Informe o local.');
       if(!emissor) errors.push('Informe o nome do assinante.');
-      if(!cargo) errors.push('Informe o cargo/entidade do assinante.');
-      if(!participantes.length) errors.push('Adicione pelo menos um participante.');
-      const invalid = participantes.filter(p=>p.horas==null);
-      if(invalid.length) errors.push(`Há ${invalid.length} participante(s) com horas inválidas.`);
-
-      if(errors.length){
-        alert('Corrija antes de continuar:\n\n• ' + errors.join('\n• '));
-        return;
-      }
-
-      const logoURL = await fileToDataURL($('#logo'));
-      const signURL = await fileToDataURL($('#assinatura'));
-
-      const area = $('#printArea');
-      area.innerHTML = participantes.map((p, i)=> buildCertificateHTML({evt, subt, dataExt, local, emissor, cargo, nome:p.nome, horas:p.horas, logoURL, signURL, idx:i+1})).join('\n');
-
-      if(triggerPrint){
-        // pequena espera para o layout compor antes de imprimir
-        setTimeout(()=>window.print(), 150);
-      }
-    }
-
-    // Eventos UI
-    $('#btnPreview').addEventListener('click', ()=> renderCerts({triggerPrint:false}));
-    $('#btnPDF').addEventListener('click', ()=> renderCerts({triggerPrint:true}));
-    $('#participantes').addEventListener('input', refreshTable);
-    $('#btnDemo').addEventListener('click', ()=>{
-      $('#evento').value = 'Latinoware – Conferência Latino‑Americana de Software Livre e Tecnologias Abertas';
-      $('#subtitulo').value = 'Trilha de Inovação e Educação Tecnológica';
-      $('#data').value = new Date().toISOString().slice(0,10);
-      $('#local').value = 'Parque Tecnológico Itaipu (PTI), Foz do Iguaçu – PR';
-      $('#emissor').value = 'Prof. Leonardo Gomes Guidolin';
-      $('#cargo').value = 'Coordenador do Curso de Engenharia de Software — Faculdade Uniguaçu';
-      $('#participantes').value = 'Mateus Alessandro Sulzbach; 8\nAna Paula Ferreira; 4.5\nJoão da Silva; 10';
-      refreshTable();
-    });
-
-    // Inicial
-    refreshTable();
-  </script>
-</body>
-</html>
+      if(!cargo
