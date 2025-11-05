@@ -6,10 +6,10 @@
   <title>Gerador de Certificados (PDF) — 1 arquivo</title>
   <style>
     :root{
-      --bg:#0b1020;       /* fundo app */
-      --card:#121a33;     /* cartão */
+      --bg:#0b1020;
+      --card:#121a33;
       --muted:#93a2c8;
-      --ink:#e8eefc;      /* texto claro */
+      --ink:#e8eefc;
       --accent:#5aa1ff;
       --ok:#61d095;
       --warn:#f6c350;
@@ -40,10 +40,9 @@
     input[type="file"]{color:var(--muted)}
     .pill{font-size:12px; border:1px dashed #2d427f; color:#a1b2e5; padding:6px 10px; border-radius:999px}
 
-    /* Área de certificados para impressão */
     #printArea{display:none;}
     .cert{
-      position:relative; box-sizing:border-box; width:297mm; height:210mm; /* A4 landscape */
+      position:relative; box-sizing:border-box; width:297mm; height:210mm; 
       padding:18mm; background: #fcfdff; color:#0c1a3c; font-family: "Segoe UI", Roboto, Arial, sans-serif;
       -webkit-print-color-adjust: exact; print-color-adjust: exact; page-break-after: always;
     }
@@ -52,14 +51,12 @@
     }
     .cert .orn{position:absolute; inset:0; pointer-events:none;}
     .cert .brand{display:flex; align-items:center; justify-content:space-between; gap:16px}
-    .brand .left{
-      display:flex; align-items:center; gap:12px
-    }
+    .brand .left{display:flex; align-items:center; gap:12px}
     .brand .logo{width:56px; height:56px; object-fit:contain}
     .brand .evt{font-weight:800; letter-spacing:.6px; font-size:18px; color:#0e2c62}
     .cert h1{margin:18mm 0 4mm; text-align:center; font-size:30px; letter-spacing:.8px; color:#0a1e4a}
     .cert p{margin:8px 0; font-size:15.5px; color:#0f2559}
-    .cert .bigname{font-size:26px; font-weight:800; text-align:center; margin:10px 0 2px; color:#0a1e4a; text-transform:uppercase;}
+    .cert .bigname{font-size:26px; font-weight:800; text-align:center; margin:10px 0 2px; color:#0a1e4a}
     .cert .center{text-align:center}
     .muted{color:#415a98}
     .meta{display:flex; gap:24px; justify-content:center; margin-top:20px; font-size:14px; color:#16306b}
@@ -76,7 +73,6 @@
       #printArea{display:block}
     }
 
-    /* Tabela de participantes (opcional) */
     table.part{width:100%; border-collapse:collapse; margin-top:8px; font-size:14px}
     table.part th, table.part td{border:1px solid #263a72; padding:8px 10px}
     table.part th{background:#0f1b3c; color:#cfe0ff; text-align:left}
@@ -149,7 +145,6 @@
     </div>
   </div>
 
-  <!-- Área de impressão -->
   <div id="printArea"></div>
 
   <script>
@@ -176,7 +171,8 @@
         const clean = ln.trim();
         if(!clean) continue;
         const parts = clean.split(/\s*[;|,\t]\s*/);
-        const nome = parts[0]?.trim().toUpperCase(); // agora nome em maiúsculas
+        const nomeBruto = parts[0]?.trim();
+        const nome = nomeBruto ? nomeBruto.toUpperCase() : '';// << apenas UPPER aqui
         const horas = parseHoras(parts[1]);
         if(!nome){ continue; }
         if(horas==null){
@@ -274,4 +270,42 @@
       if(!dataExt) errors.push('Selecione a data do evento.');
       if(!local) errors.push('Informe o local.');
       if(!emissor) errors.push('Informe o nome do assinante.');
-      if(!cargo
+      if(!cargo) errors.push('Informe o cargo/entidade do assinante.');
+      if(!participantes.length) errors.push('Adicione pelo menos um participante.');
+      const invalid = participantes.filter(p=>p.horas==null);
+      if(invalid.length) errors.push(`Há ${invalid.length} participante(s) com horas inválidas.`);
+
+      if(errors.length){
+        alert('Corrija antes de continuar:\n\n• ' + errors.join('\n• '));
+        return;
+      }
+
+      const logoURL = await fileToDataURL($('#logo'));
+      const signURL = await fileToDataURL($('#assinatura'));
+
+      const area = $('#printArea');
+      area.innerHTML = participantes.map((p, i)=> buildCertificateHTML({evt, subt, dataExt, local, emissor, cargo, nome:p.nome, horas:p.horas, logoURL, signURL, idx:i+1})).join('\n');
+
+      if(triggerPrint){
+        setTimeout(()=>window.print(), 150);
+      }
+    }
+
+    $('#btnPreview').addEventListener('click', ()=> renderCerts({triggerPrint:false}));
+    $('#btnPDF').addEventListener('click', ()=> renderCerts({triggerPrint:true}));
+    $('#participantes').addEventListener('input', refreshTable);
+    $('#btnDemo').addEventListener('click', ()=>{
+      $('#evento').value = 'Latinoware – Conferência Latino‑Americana de Software Livre e Tecnologias Abertas';
+      $('#subtitulo').value = 'Trilha de Inovação e Educação Tecnológica';
+      $('#data').value = new Date().toISOString().slice(0,10);
+      $('#local').value = 'Parque Tecnológico Itaipu (PTI), Foz do Iguaçu – PR';
+      $('#emissor').value = 'Prof. Leonardo Gomes Guidolin';
+      $('#cargo').value = 'Coordenador do Curso de Engenharia de Software — Faculdade Uniguaçu';
+      $('#participantes').value = 'Mateus Alessandro Sulzbach; 8\nAna Paula Ferreira; 4.5\nJoão da Silva; 10';
+      refreshTable();
+    });
+
+    refreshTable();
+  </script>
+</body>
+</html>
