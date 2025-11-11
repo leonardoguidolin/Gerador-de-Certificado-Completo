@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gerador de Certificados (PDF) — 1 arquivo</title>
+  <title>Login + Gerador de Certificados (PDF) — 1 arquivo</title>
   <style>
     :root{
       --bg:#0b1020;
@@ -19,6 +19,40 @@
       margin:0; font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif; 
       color:var(--ink); background:radial-gradient(1200px 800px at 20% -10%, #1e2a55 0, #121a33 35%, #0b1020 70%);
     }
+
+    /* ---------- Tela de Login ---------- */
+    #loginScreen{
+      min-height:100vh;
+      display:flex; align-items:center; justify-content:center;
+      padding:24px;
+    }
+    .login-card{
+      background:var(--card);
+      border:1px solid #1e2950;
+      border-radius:16px;
+      padding:28px;
+      width:min(92vw,360px);
+      box-shadow:0 10px 24px rgba(0,0,0,.25);
+      text-align:center;
+    }
+    .login-card h2{margin:0 0 6px}
+    .login-card p.sub{font-size:14px; color:#a7b6e2; margin:0 0 16px}
+    .field{margin-bottom:12px; text-align:left}
+    .field label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+    .field input{
+      width:100%; padding:12px; border-radius:10px; border:1px solid #20305f;
+      background:#0d1530; color:var(--ink); outline:none; font-size:15px;
+    }
+    .row{display:flex; gap:8px; align-items:center; justify-content:space-between}
+    .row small{color:#a7b6e2}
+    .btn{
+      appearance:none; border:1px solid #31457f; background:#0e1a3b; color:var(--ink);
+      padding:12px 16px; border-radius:12px; cursor:pointer; font-weight:600; width:100%;
+    }
+    .btn.primary{background:linear-gradient(180deg, #5aa1ff, #3d7ee0); color:#081024; border:none}
+    #loginMsg{color:var(--warn); font-size:13px; margin-top:10px; min-height:18px}
+
+    /* ---------- App (gerador) ---------- */
     .container{max-width:1100px; margin:32px auto; padding:0 16px;}
     header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px}
     header h1{font-size:22px; font-weight:700; margin:0}
@@ -31,7 +65,6 @@
     input[type="text"], input[type="date"], textarea{ width:100%; box-sizing:border-box; background:#0d1530; color:var(--ink); border:1px solid #20305f; border-radius:10px; padding:12px 12px; outline:none }
     textarea{min-height:160px; resize:vertical}
     .hint{font-size:12px; color:#a7b6e2; margin-top:6px}
-    .row{display:flex; gap:12px; align-items:center}
     .btns{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px}
     button{appearance:none; border:1px solid #31457f; background:#0e1a3b; color:var(--ink); padding:12px 16px; border-radius:12px; cursor:pointer; font-weight:600}
     button.primary{background:linear-gradient(180deg, #5aa1ff, #3d7ee0); color:#081024; border: none}
@@ -69,6 +102,7 @@
 
     @media print{
       body{background:white}
+      #loginScreen{display:none !important}
       .container, header{display:none !important}
       #printArea{display:block}
     }
@@ -76,80 +110,177 @@
     table.part{width:100%; border-collapse:collapse; margin-top:8px; font-size:14px}
     table.part th, table.part td{border:1px solid #263a72; padding:8px 10px}
     table.part th{background:#0f1b3c; color:#cfe0ff; text-align:left}
+
+    /* Esconde o app até logar */
+    #app{display:none}
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>🎓 Gerador de Certificados (um único arquivo)</h1>
-      <span class="pill">A4 • Paisagem • Salvar como PDF</span>
-    </header>
 
-    <div class="card section">
-      <div class="grid cols-2">
-        <div>
-          <label for="evento">Nome do evento</label>
-          <input id="evento" type="text" placeholder="Ex.: Latinoware – Conferência Latino‑Americana de Software Livre e Tecnologias Abertas" />
+  <!-- TELA DE LOGIN -->
+  <section id="loginScreen">
+    <div class="login-card">
+      <h2>🔒 Acesso Restrito</h2>
+      <p class="sub">Entre para gerar certificados</p>
+
+      <div class="field">
+        <label for="loginUser">Usuário</label>
+        <input id="loginUser" type="text" placeholder="nome" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label for="loginPass">Senha</label>
+        <input id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+
+      <div class="row" style="margin:8px 0 14px">
+        <label style="display:flex; gap:8px; align-items:center; cursor:pointer">
+          <input type="checkbox" id="remember" />
+          <span>Manter conectado</span>
+        </label>
+        <small>Dica: usuário e senha são <b>leandro</b></small>
+      </div>
+
+      <button class="btn primary" id="btnLogin">Entrar</button>
+      <div id="loginMsg"></div>
+    </div>
+  </section>
+
+  <!-- APP (GERADOR) -->
+  <section id="app" aria-hidden="true">
+    <div class="container">
+      <header>
+        <h1>🎓 Gerador de Certificados (um único arquivo)</h1>
+        <div style="display:flex; align-items:center; gap:8px">
+          <span class="pill">A4 • Paisagem • Salvar como PDF</span>
+          <button id="btnLogout" class="ghost" title="Encerrar sessão">Sair</button>
         </div>
-        <div>
-          <label for="subtitulo">Descrição/tema (opcional)</label>
-          <input id="subtitulo" type="text" placeholder="Ex.: Trilha de Inovação e Educação Tecnológica" />
+      </header>
+
+      <div class="card section">
+        <div class="grid cols-2">
+          <div>
+            <label for="evento">Nome do evento</label>
+            <input id="evento" type="text" placeholder="Ex.: Latinoware – Conferência Latino-Americana de Software Livre e Tecnologias Abertas" />
+          </div>
+          <div>
+            <label for="subtitulo">Descrição/tema (opcional)</label>
+            <input id="subtitulo" type="text" placeholder="Ex.: Trilha de Inovação e Educação Tecnológica" />
+          </div>
+          <div>
+            <label for="data">Data do evento</label>
+            <input id="data" type="date" />
+            <div class="hint">Usado no corpo do certificado (formato por extenso).</div>
+          </div>
+          <div>
+            <label for="local">Local</label>
+            <input id="local" type="text" placeholder="Ex.: Parque Tecnológico Itaipu (PTI), Foz do Iguaçu – PR" />
+          </div>
+          <div>
+            <label for="emissor">Assinante (nome)</label>
+            <input id="emissor" type="text" placeholder="Ex.: Prof. Leonardo Gomes Guidolin" />
+          </div>
+          <div>
+            <label for="cargo">Assinante (cargo/entidade)</label>
+            <input id="cargo" type="text" placeholder="Ex.: Coordenador do Curso de Engenharia de Software — Faculdade Uniguaçu" />
+          </div>
         </div>
-        <div>
-          <label for="data">Data do evento</label>
-          <input id="data" type="date" />
-          <div class="hint">Usado no corpo do certificado (formato por extenso).</div>
-        </div>
-        <div>
-          <label for="local">Local</label>
-          <input id="local" type="text" placeholder="Ex.: Parque Tecnológico Itaipu (PTI), Foz do Iguaçu – PR" />
-        </div>
-        <div>
-          <label for="emissor">Assinante (nome)</label>
-          <input id="emissor" type="text" placeholder="Ex.: Prof. Leonardo Gomes Guidolin" />
-        </div>
-        <div>
-          <label for="cargo">Assinante (cargo/entidade)</label>
-          <input id="cargo" type="text" placeholder="Ex.: Coordenador do Curso de Engenharia de Software — Faculdade Uniguaçu" />
+
+        <div class="grid cols-2" style="margin-top:14px">
+          <div>
+            <label for="logo">Logomarca (opcional)</label>
+            <input id="logo" type="file" accept="image/*" />
+            <div class="hint">PNG com fundo transparente fica excelente.</div>
+          </div>
+          <div>
+            <label for="assinatura">Assinatura digital (opcional)</label>
+            <input id="assinatura" type="file" accept="image/*" />
+            <div class="hint">Imagem da assinatura para aparecer acima da linha.</div>
+          </div>
         </div>
       </div>
 
-      <div class="grid cols-2" style="margin-top:14px">
-        <div>
-          <label for="logo">Logomarca (opcional)</label>
-          <input id="logo" type="file" accept="image/*" />
-          <div class="hint">PNG com fundo transparente fica excelente.</div>
+      <div class="card section" style="margin-top:16px">
+        <label for="participantes">Participantes (um por linha): <span class="muted">Nome; Horas</span></label>
+        <textarea id="participantes" placeholder="Exemplos:
+Mateus Alessandro Sulzbach; 8
+Ana Paula Ferreira; 4.5
+João da Silva; 10"></textarea>
+        <details style="margin-top:10px">
+          <summary class="muted">Ver como tabela (opcional)</summary>
+          <div class="hint">Você pode colar em massa; a tabela é apenas visual.</div>
+          <table class="part" id="previewTable"><thead><tr><th>#</th><th>Nome</th><th>Horas</th></tr></thead><tbody></tbody></table>
+        </details>
+        <div class="btns">
+          <button id="btnPreview">Pré-visualizar certificados</button>
+          <button id="btnPDF" class="primary">Gerar PDF (Imprimir)</button>
+          <button id="btnDemo" class="ghost">Preencher com exemplo</button>
         </div>
-        <div>
-          <label for="assinatura">Assinatura digital (opcional)</label>
-          <input id="assinatura" type="file" accept="image/*" />
-          <div class="hint">Imagem da assinatura para aparecer acima da linha.</div>
-        </div>
+        <div class="hint">Dica: após clicar em <b>Gerar PDF</b>, escolha "Salvar como PDF" no diálogo de impressão. O layout já está no tamanho A4 Paisagem com quebras de página.</div>
       </div>
     </div>
 
-    <div class="card section" style="margin-top:16px">
-      <label for="participantes">Participantes (um por linha): <span class="muted">Nome; Horas</span></label>
-      <textarea id="participantes" placeholder="Exemplos:\nMateus Alessandro Sulzbach; 8\nAna Paula Ferreira; 4.5\nJoão da Silva; 10"></textarea>
-      <details style="margin-top:10px">
-        <summary class="muted">Ver como tabela (opcional)</summary>
-        <div class="hint">Você pode colar em massa; a tabela é apenas visual.</div>
-        <table class="part" id="previewTable"><thead><tr><th>#</th><th>Nome</th><th>Horas</th></tr></thead><tbody></tbody></table>
-      </details>
-      <div class="btns">
-        <button id="btnPreview">Pré‑visualizar certificados</button>
-        <button id="btnPDF" class="primary">Gerar PDF (Imprimir)</button>
-        <button id="btnDemo" class="ghost">Preencher com exemplo</button>
-      </div>
-      <div class="hint">Dica: após clicar em <b>Gerar PDF</b>, escolha "Salvar como PDF" no diálogo de impressão. O layout já está no tamanho A4 Paisagem com quebras de página.</div>
-    </div>
-  </div>
-
-  <div id="printArea"></div>
+    <div id="printArea"></div>
+  </section>
 
   <script>
+    // ---------- LOGIN ----------
+    const LOGIN_USER = 'leandro';
+    const LOGIN_PASS = 'leandro';
+    const KEY = 'certapp.auth';
+
     const $ = (sel) => document.querySelector(sel);
 
+    function showApp(){
+      $('#loginScreen').style.display = 'none';
+      const app = $('#app');
+      app.style.display = 'block';
+      app.setAttribute('aria-hidden', 'false');
+    }
+    function showLogin(){
+      $('#app').style.display = 'none';
+      $('#loginScreen').style.display = 'flex';
+    }
+    function loginOk(){
+      localStorage.setItem(KEY, JSON.stringify({ts: Date.now()}));
+      showApp();
+    }
+    function isLogged(){
+      try{
+        const raw = localStorage.getItem(KEY);
+        if(!raw) return false;
+        const {ts} = JSON.parse(raw);
+        // sessão expira em 7 dias
+        return ts && (Date.now() - ts) < 7*24*60*60*1000;
+      }catch(e){ return false; }
+    }
+    function logout(){
+      localStorage.removeItem(KEY);
+      showLogin();
+    }
+
+    $('#btnLogin').addEventListener('click', ()=>{
+      const u = $('#loginUser').value.trim();
+      const p = $('#loginPass').value.trim();
+      if(u===LOGIN_USER && p===LOGIN_PASS){
+        if($('#remember').checked){ loginOk(); }
+        else { sessionStorage.setItem(KEY, '1'); showApp(); }
+        $('#loginMsg').textContent = '';
+      } else {
+        $('#loginMsg').textContent = 'Usuário ou senha incorretos.';
+      }
+    });
+
+    // Enter para enviar
+    $('#loginPass').addEventListener('keydown', (e)=>{ if(e.key==='Enter') $('#btnLogin').click(); });
+
+    // Restaura sessão
+    if(isLogged() || sessionStorage.getItem(KEY)==='1'){ showApp(); }
+
+    // Logout
+    $('#btnLogout')?.addEventListener('click', ()=>{ sessionStorage.removeItem(KEY); logout(); });
+
+
+    // ---------- GERADOR (seu código original) ----------
     function sanitize(str){
       return String(str||"")
         .replaceAll('&','&amp;')
@@ -172,7 +303,7 @@
         if(!clean) continue;
         const parts = clean.split(/\s*[;|,\t]\s*/);
         const nomeBruto = parts[0]?.trim();
-        const nome = nomeBruto ? nomeBruto.toUpperCase() : '';// << apenas UPPER aqui
+        const nome = nomeBruto ? nomeBruto.toUpperCase() : ''; // UPPER aplicado aqui
         const horas = parseHoras(parts[1]);
         if(!nome){ continue; }
         if(horas==null){
@@ -238,7 +369,7 @@
         ${textoSub}
         <p class="center" style="margin-top:12px">Certificamos que</p>
         <div class="bigname">${nomeSafe}</div>
-        <p class="center">participou do evento <b>${evtSafe}</b>${subtSafe?", ":""}${subtSafe?`<span class=\"muted\">${subtSafe}</span>`:""}, realizado em ${localSafe}, no dia ${dataExt}, totalizando <b>${horas}</b> hora${horas==1?'':'s'} de atividades.</p>
+        <p class="center">participou do evento <b>${evtSafe}</b>${subtSafe?", ":""}${subtSafe?`<span class="muted">${subtSafe}</span>`:""}, realizado em ${localSafe}, no dia ${dataExt}, totalizando <b>${horas}</b> hora${horas==1?'':'s'} de atividades.</p>
         <div class="meta">
           <div><b>Local:</b> ${localSafe}</div>
           <div><b>Data:</b> ${dataExt}</div>
@@ -291,11 +422,12 @@
       }
     }
 
-    $('#btnPreview').addEventListener('click', ()=> renderCerts({triggerPrint:false}));
-    $('#btnPDF').addEventListener('click', ()=> renderCerts({triggerPrint:true}));
-    $('#participantes').addEventListener('input', refreshTable);
-    $('#btnDemo').addEventListener('click', ()=>{
-      $('#evento').value = 'Latinoware – Conferência Latino‑Americana de Software Livre e Tecnologias Abertas';
+    // Bind botões do app (somente se o app existe no DOM)
+    $('#btnPreview')?.addEventListener('click', ()=> renderCerts({triggerPrint:false}));
+    $('#btnPDF')?.addEventListener('click', ()=> renderCerts({triggerPrint:true}));
+    $('#participantes')?.addEventListener('input', refreshTable);
+    $('#btnDemo')?.addEventListener('click', ()=>{
+      $('#evento').value = 'Latinoware – Conferência Latino-Americana de Software Livre e Tecnologias Abertas';
       $('#subtitulo').value = 'Trilha de Inovação e Educação Tecnológica';
       $('#data').value = new Date().toISOString().slice(0,10);
       $('#local').value = 'Parque Tecnológico Itaipu (PTI), Foz do Iguaçu – PR';
@@ -305,6 +437,7 @@
       refreshTable();
     });
 
+    // Inicializa preview vazio
     refreshTable();
   </script>
 </body>
